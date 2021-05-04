@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {map} from 'rxjs/operators';
 import {Post} from './post.model';
+import {PostsService} from './posts.service';
 
 @Component({
   selector: 'app-root',
@@ -11,41 +12,20 @@ import {Post} from './post.model';
 export class AppComponent implements OnInit {
   loadedPosts = [];
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private postsService: PostsService) {}
 
   ngOnInit() {
-    this.fetchPost();
+    this.postsService.fetchPosts().subscribe(posts => {this.loadedPosts = posts});
   }
 
   onCreatePost(postData: { title: string; content: string }) {
-    // Send Http request
-    this.http.post<{name:string}>('https://angular-http-389af-default-rtdb.europe-west1.firebasedatabase.app/posts.json', postData)
-      .subscribe(responseData => {
-      console.log(responseData);
-    });
-  }
-
-  private fetchPost() {
-    this.http.get<{ [key: string]: Post }>('https://angular-http-389af-default-rtdb.europe-west1.firebasedatabase.app/posts.json')
-      .pipe(
-        map(responseData => {
-          const postsArray: Post[] =[];
-          for (const key in responseData) {
-            if (responseData.hasOwnProperty(key)){
-              postsArray.push({...responseData[key], id: key });
-            }
-          }
-          return postsArray;
-        })
-      )
-      .subscribe(posts => {
-      console.log(posts);
-      this.loadedPosts = posts;
-    });
+    this.postsService.createAndStorePost(postData.title, postData.content);
   }
 
   onFetchPosts() {
-    this.fetchPost();
+    this.postsService.fetchPosts().subscribe(posts => {
+      this.loadedPosts = posts;
+    });
   }
 
   onClearPosts() {
