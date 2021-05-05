@@ -1,7 +1,7 @@
 import {Injectable} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
+import {HttpClient, HttpEventType} from '@angular/common/http';
 import {Post} from './post.model';
-import {map} from 'rxjs/operators';
+import {map, tap} from 'rxjs/operators';
 
 @Injectable({providedIn: 'root'})
 export class PostsService{
@@ -10,10 +10,13 @@ export class PostsService{
 
   createAndStorePost(title: string, content: string){
     const postData: Post = {title, content};
-    this.http.post<{name:string}>('https://angular-http-389af-default-rtdb.europe-west1.firebasedatabase.app/posts.json', postData)
-      .subscribe(responseData => {
-        console.log(responseData);
-      });
+    return this.http.post<{name:string}>(
+      'https://angular-http-389af-default-rtdb.europe-west1.firebasedatabase.app/posts.json',
+      postData,
+      {
+        observe: 'response'
+      }
+    )
   }
   fetchPosts() {
     return this.http.get<{ [key: string]: Post }>(
@@ -30,5 +33,18 @@ export class PostsService{
           return postsArray;
         })
       );
+  }
+
+  clearPosts() {
+    return this.http.delete(
+      'https://angular-http-389af-default-rtdb.europe-west1.firebasedatabase.app/posts.json',
+      {
+        observe: 'events'
+      }
+    ).pipe(
+      tap(event => {
+        console.log(event);
+      })
+    );
   }
 }
